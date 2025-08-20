@@ -1,0 +1,26 @@
+CREATE TABLE emp(emp_id CHAR(8) PRIMARY KEY CHECK(emp_id = 'e*'), emp_name VARCHAR(18) NOT NULL, street_no INT, city VARCHAR(18));
+CREATE TABLE company(company_name VARCHAR(18) PRIMARY KEY, city VARCHAR(18));
+CREATE TABLE works(emp_id CHAR(8), company_name VARCHAR(18), salary FLOAT, PRIMARY KEY(emp_id, company_name),  FOREIGN KEY(emp_id) REFERENCES emp(emp_id), FOREIGN KEY(company_name) REFERENCES company(company_name));
+CREATE TABLE manages(emp_id CHAR(8), manager_id CHAR(8), UNIQUE(emp_id, manager_id), FOREIGN KEY(emp_id) REFERENCES emp(emp_id), FOREIGN KEY(manager_id) REFERENCES emp(emp_id));
+ALTER TABLE emp MODIFY COLUMN emp_id CHAR(8) NOT NULL;
+ ALTER TABLE emp DROP CHECK emp_chk_1;
+ ADD CONSTRAINT chk_emp_id_prefix CHECK (emp_id LIKE 'e%');
+
+
+SELECT emp_name from emp, works WHERE emp.emp_id = works.emp_id AND works.company_name = 'SBI'; --> emp works for company SBI
+SELECT e.emp_name,e.city FROM emp AS e,company AS c, works AS w WHERE e.emp_id = w.emp_id AND c.company_name = w.company_name AND e.city = c.city; --> Same city as their company
+SELECT * FROM emp e JOIN manages m ON e.emp_id = m.manager_id JOIN emp em ON em.emp_id = m.emp_id WHERE e.city = em.city AND e.street_no = em.street_no; --> manager and employee living in same city have same street no
+SELECT e.emp_name FROM emp e JOIN works w ON w.emp_id = e.emp_id WHERE w.salary >( SELECT AVG(w2.salary) FROM works w2 where w2.company_name = w.company_name); --> emp earns more than companies avg sal
+SELECT c.company_name, SUM(w.salary) FROM works w JOIN company c ON w.company_name = c.company_name GROUP BY c.company_name ORDER BY SUM(w.salary) ASC LIMIT 1; --> least salary paying company
+ SELECT DISTINCT e.emp_name,w.salary, w.salary*1.1 AS new_salary FROM manages m JOIN emp e ON m.manager_id = e.emp_id JOIN works w ON m.manager_i
+d = w.emp_id WHERE w.company_name = "SBT";
+
+SELECT count(faculty_code) AS count FROM Faculty;
+SELECT m_mark.mark,Subject.subject_name, (SELECT AVG(m.mark) FROM m_mark m, Subject s WHERE m.subject_code=s.subject_code) as avg_mark FROM m_mark,Subject;
+SELECT s.student_name, m.student_code, SUM(m.mark) AS total_marks FROM m_mark m JOIN Student s ON m.student_code = s.student_code GROUP BY m.student_code, s.student_name;
+SELECT subject_code, AVG(mark) AS average_mark FROM m_mark GROUP BY subject_code;
+SELECT s.subject_name FROM m_mark m JOIN Subject s ON s.subject_code=m.subject_code WHERE m.mark<0.4*s.max_mark;
+SELECT st.student_name, su.subject_name,(m.mark / su.max_mark) * 100 AS percentage_mark FROM m_mark m JOIN Student st ON m.student_code = st.student_code JOIN Subject su ON m.subject_code = su.subject_code WHERE (m.mark / su.max_mark) * 100 < 40;
+SELECT f.faculty_name, GROUP_CONCAT(s.subject_name ORDER BY s.subject_name SEPARATOR ', ') AS subjects_taught FROM Faculty f JOIN Faculty_Subject fs ON f.faculty_code = fs.faculty_code JOIN Subject s ON fs.subject_code = s.subject_code GROUP BY f.faculty_code, f.faculty_name;
+SELECT f.faculty_code, f.faculty_name, COUNT(fs.subject_code) AS subjects_count, GROUP_CONCAT(s.subject_name ORDER BY s.subject_name SEPARATOR ', ') AS subjects_taught FROM Faculty f JOIN Faculty_Subject fs ON f.faculty_code = fs.faculty_code JOIN Subject s ON fs.subject_code = s.subject_code GROUP BY f.faculty_code, f.faculty_name HAVING COUNT(fs.subject_code) > 1;
+SELECT st.student_name, s.subject_name, m.mark, CONCAT(ROUND((m.mark / s.max_mark) * 100, 2), '%') AS percentage FROM m_mark m JOIN Student st ON m.student_code = st.student_code JOIN Subject s ON m.subject_code = s.subject_code ORDER BY m.mark ASC;
